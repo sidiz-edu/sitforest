@@ -665,21 +665,33 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 .review-nav { display:flex;gap:10px;justify-content:flex-end;margin-top:20px; }
 
 /* ══ 설문 문항 분석 ══ */
-.sq-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:12px;}
-.sq-chart-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
+.sq-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0;}
+.sq-grid .sq-chart-card{margin-bottom:0;}
+.sq-chart-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px;transition:border-color .15s;}
+.sq-chart-card.open{border-color:var(--accent2);}
+.sq-chart-header{display:flex;align-items:flex-start;gap:10px;padding:16px 18px;cursor:pointer;user-select:none;}
+.sq-chart-header:hover{background:var(--surface2);}
+.sq-chart-body{display:none;padding:0 18px 18px;}
+.sq-chart-card.open .sq-chart-body{display:block;}
 .sq-num-badge{width:26px;height:26px;background:rgba(96,196,240,.12);color:var(--accent2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.sq-chart-card.open .sq-num-badge{background:var(--accent2);color:#fff;}
 .sq-type-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(96,196,240,.1);color:var(--accent2);flex-shrink:0;margin-top:3px;}
 .sq-text{font-size:14px;font-weight:600;line-height:1.45;flex:1;}
-.sq-avg-badge{margin-left:auto;font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent2);flex-shrink:0;}
+.sq-chevron{color:var(--muted);font-size:11px;flex-shrink:0;margin-top:4px;transition:transform .2s;}
+.sq-chart-card.open .sq-chevron{transform:rotate(180deg);}
+.sq-avg-badge{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent2);flex-shrink:0;}
 
 /* 분포 막대 */
-.dist-bar-wrap{display:flex;flex-direction:column;gap:6px;}
-.dist-row{display:grid;grid-template-columns:90px 1fr 36px;gap:10px;align-items:center;}
-.dist-label{font-size:12px;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.dist-bar-bg{height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;}
-.dist-bar-fill{height:100%;border-radius:5px;background:var(--accent2);transition:width .6s ease;}
+.dist-bar-wrap{display:flex;flex-direction:column;gap:8px;}
+.dist-row{display:grid;grid-template-columns:minmax(110px,180px) 1fr auto;gap:10px;align-items:center;}
+.dist-label{font-size:12px;color:var(--text);text-align:right;word-break:keep-all;line-height:1.35;}
+.dist-bar-bg{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;}
+.dist-bar-fill{height:100%;border-radius:6px;background:var(--accent2);transition:width .6s ease;}
 .dist-bar-fill.scale-fill{background:linear-gradient(90deg,var(--accent2),var(--accent4));}
-.dist-cnt{font-size:11px;color:var(--muted);text-align:right;}
+.dist-cnt{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap;}
+.dist-pct{font-size:10px;color:var(--dim);}
+.etc-resp-list{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.etc-resp-item{font-size:12px;color:var(--text);padding:6px 10px;background:var(--surface2);border-radius:var(--rs);margin-bottom:5px;border-left:2px solid var(--accent2);}
 .award-ac-drop{position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:1000;max-height:180px;overflow-y:auto;display:none;}
 .award-ac-drop.open{display:block;}
 .award-ac-item{padding:8px 12px;font-size:13px;color:var(--text);cursor:pointer;}
@@ -4364,199 +4376,128 @@ function renderSurveyAnalysis(item, responses) {
       </div>
     </div>` : '';
 
-  container.innerHTML = respondentChipsHTML + item.questions.map((q, i) => {
+  const allCardHTMLs = item.questions.map((q,i) => {
     const typeLabel = {
       multiple:'객관식', ox:'O/X', short:'단답형', essay:'서술형', scale:'척도',
       checkbox:'체크박스', dropdown:'드롭다운', linear:'선형 배율', star:'등급(별점)',
       grid:'객관식 그리드', checkgrid:'체크박스 그리드', date:'날짜', time:'시간', file:'파일 업로드'
     }[q.type] || q.type;
-
-    // 응답 추출 (체크박스 등 배열/객체 타입 포함)
     const rawAnswers = responses.map(r => r.answers?.[q.id]).filter(a => a !== undefined && a !== null && a !== '');
     const respondentCount = rawAnswers.length;
+    const pctStr = responses.length ? Math.round(respondentCount/responses.length*100)+'%' : '0%';
 
-    let analysisHTML = '';
+    let aHTML = '';
+    const makeDistRow = (label, cnt, maxCnt, style='') => {
+      const pct = responses.length ? Math.round(cnt/responses.length*100) : 0;
+      return `<div class="dist-row">
+        <div class="dist-label">${label}</div>
+        <div class="dist-bar-bg"><div class="dist-bar-fill${style?' '+style:''}" style="width:${Math.round(cnt/maxCnt*100)}%"></div></div>
+        <div class="dist-cnt">${cnt}명 <span class="dist-pct">${pct}%</span></div>
+      </div>`;
+    };
 
     if (q.type === 'scale') {
-      const nums = rawAnswers.map(Number).filter(n => !isNaN(n) && n >= 1 && n <= 5);
-      const avg = nums.length ? (nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1) : '—';
-      const dist = [1,2,3,4,5].map(v=>({val:v, cnt:nums.filter(n=>n===v).length}));
-      const maxCnt = Math.max(...dist.map(d=>d.cnt), 1);
-      analysisHTML = `
+      const nums = rawAnswers.map(Number).filter(n=>!isNaN(n)&&n>=1&&n<=5);
+      const avg = nums.length?(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1):'—';
+      const dist=[1,2,3,4,5].map(v=>({val:v,cnt:nums.filter(n=>n===v).length}));
+      const maxCnt=Math.max(...dist.map(d=>d.cnt),1);
+      aHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         <div class="sq-avg-badge">${avg}<span style="font-size:13px;color:var(--muted);"> / 5</span></div>
-        <div class="dist-bar-wrap" style="margin-top:10px;">
-          ${dist.map(d=>`<div class="dist-row">
-            <div class="dist-label">${d.val}점</div>
-            <div class="dist-bar-bg"><div class="dist-bar-fill scale-fill" style="width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
-            <div class="dist-cnt">${d.cnt}명</div>
-          </div>`).join('')}
-        </div>`;
-
+        <div style="font-size:12px;color:var(--muted);">${q.scaleMin||'전혀 아니다'} → ${q.scaleMax||'매우 그렇다'}</div>
+      </div>
+      <div class="dist-bar-wrap">${dist.map(d=>makeDistRow(d.val+'점',d.cnt,maxCnt,'scale-fill')).join('')}</div>`;
     } else if (q.type === 'linear') {
-      const min = q.linearMin ?? 1, max = q.linearMax ?? 5;
-      const nums = rawAnswers.map(Number).filter(n => !isNaN(n));
-      const avg = nums.length ? (nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1) : '—';
-      const dist = Array.from({length:max-min+1},(_,i)=>i+min).map(v=>({val:v, cnt:nums.filter(n=>n===v).length}));
-      const maxCnt = Math.max(...dist.map(d=>d.cnt), 1);
-      analysisHTML = `
+      const min=q.linearMin??1,max=q.linearMax??5;
+      const nums=rawAnswers.map(Number).filter(n=>!isNaN(n));
+      const avg=nums.length?(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1):'—';
+      const dist=Array.from({length:max-min+1},(_,i)=>i+min).map(v=>({val:v,cnt:nums.filter(n=>n===v).length}));
+      const maxCnt=Math.max(...dist.map(d=>d.cnt),1);
+      aHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         <div class="sq-avg-badge">${avg}<span style="font-size:13px;color:var(--muted);"> / ${max}</span></div>
-        <div class="dist-bar-wrap" style="margin-top:10px;">
-          ${dist.map(d=>`<div class="dist-row">
-            <div class="dist-label">${d.val}점</div>
-            <div class="dist-bar-bg"><div class="dist-bar-fill scale-fill" style="width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
-            <div class="dist-cnt">${d.cnt}명</div>
-          </div>`).join('')}
-        </div>`;
-
+        <div style="font-size:12px;color:var(--muted);">${q.scaleMin||''} → ${q.scaleMax||''}</div>
+      </div>
+      <div class="dist-bar-wrap">${dist.map(d=>makeDistRow(d.val+'점',d.cnt,maxCnt,'scale-fill')).join('')}</div>`;
     } else if (q.type === 'star') {
-      const max = q.starMax || 5;
-      const nums = rawAnswers.map(Number).filter(n => !isNaN(n) && n >= 1 && n <= max);
-      const avg = nums.length ? (nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1) : '—';
-      const dist = Array.from({length:max},(_,i)=>i+1).map(v=>({val:v, cnt:nums.filter(n=>n===v).length}));
-      const maxCnt = Math.max(...dist.map(d=>d.cnt), 1);
-      analysisHTML = `
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <span class="sq-avg-badge">${avg}</span>
-          <span style="font-size:20px;">${Array.from({length:max},(_,i)=>`<span style="color:${i<Math.round(avg)?'#f5c518':'var(--border2)'};">★</span>`).join('')}</span>
-        </div>
-        <div class="dist-bar-wrap">
-          ${dist.map(d=>`<div class="dist-row">
-            <div class="dist-label">${d.val}★</div>
-            <div class="dist-bar-bg"><div class="dist-bar-fill" style="background:#f5c518;width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
-            <div class="dist-cnt">${d.cnt}명</div>
-          </div>`).join('')}
-        </div>`;
-
+      const max=q.starMax||5;
+      const nums=rawAnswers.map(Number).filter(n=>!isNaN(n)&&n>=1&&n<=max);
+      const avg=nums.length?(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1):'—';
+      const dist=Array.from({length:max},(_,i)=>i+1).map(v=>({val:v,cnt:nums.filter(n=>n===v).length}));
+      const maxCnt=Math.max(...dist.map(d=>d.cnt),1);
+      aHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span class="sq-avg-badge">${avg}</span>
+        <span style="font-size:18px;">${Array.from({length:max},(_,k)=>`<span style="color:${k<Math.round(avg)?'#f5c518':'var(--border2)'};">★</span>`).join('')}</span>
+      </div>
+      <div class="dist-bar-wrap">${dist.map(d=>makeDistRow(d.val+'★',d.cnt,maxCnt)).join('')}</div>`;
     } else if (q.type === 'multiple') {
-      const opts = q.options || [];
-      const dist = opts.map((o,oi)=>({label:o||`보기${oi+1}`, cnt:rawAnswers.filter(a=>String(a)===String(oi)).length}));
-      const maxCnt = Math.max(...dist.map(d=>d.cnt), 1);
-      analysisHTML = `<div class="dist-bar-wrap">
-        ${dist.map(d=>`<div class="dist-row">
-          <div class="dist-label" title="${d.label}">${d.label}</div>
-          <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
-          <div class="dist-cnt">${d.cnt}명</div>
-        </div>`).join('')}
-      </div>`;
-
+      const opts=q.options||[];
+      const dist=opts.map((o,oi)=>({label:o||`보기${oi+1}`,cnt:rawAnswers.filter(a=>String(a)===String(oi)).length}));
+      const maxCnt=Math.max(...dist.map(d=>d.cnt),1);
+      const etcIdx=opts.findIndex(o=>o.trim()==='기타');
+      const etcAnswers=etcIdx!==-1?responses.filter(r=>String(r.answers?.[q.id])===String(etcIdx)&&r.answers?.[q.id+'_etc']).map(r=>({name:r.name,store:r.store,etc:r.answers[q.id+'_etc']})):[];
+      aHTML=`<div class="dist-bar-wrap">${dist.map(d=>makeDistRow(d.label,d.cnt,maxCnt)).join('')}</div>`
+        +(etcAnswers.length?`<div class="etc-resp-list"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">기타 응답</div>${etcAnswers.map(e=>`<div class="etc-resp-item"><span style="font-size:11px;color:var(--muted);">${e.name}${e.store?` · ${e.store}`:''}</span><br>${e.etc}</div>`).join('')}</div>`:'');
     } else if (q.type === 'checkbox') {
-      // 체크박스 — 각 선택지별 선택 횟수 (복수선택이므로 총합 > 응답자 수 가능)
-      const opts = q.options || [];
-      const dist = opts.map((o,oi)=>({
-        label: o || `보기${oi+1}`,
-        cnt: rawAnswers.filter(a => Array.isArray(a) && a.includes(oi)).length
-      }));
-      const maxCnt = Math.max(...dist.map(d=>d.cnt), 1);
-      analysisHTML = `
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">복수 선택 가능 — 응답자 ${respondentCount}명</div>
-        <div class="dist-bar-wrap">
-          ${dist.map(d=>`<div class="dist-row">
-            <div class="dist-label" title="${d.label}">${d.label}</div>
-            <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
-            <div class="dist-cnt">${d.cnt}명</div>
-          </div>`).join('')}
-        </div>`;
-
+      const opts=q.options||[];
+      const dist=opts.map((o,oi)=>({label:o||`보기${oi+1}`,cnt:rawAnswers.filter(a=>Array.isArray(a)&&a.includes(oi)).length}));
+      const maxCnt=Math.max(...dist.map(d=>d.cnt),1);
+      aHTML=`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">복수 선택 · 응답자 ${respondentCount}명</div>
+      <div class="dist-bar-wrap">${dist.map(d=>makeDistRow(d.label,d.cnt,maxCnt)).join('')}</div>`;
     } else if (q.type === 'dropdown') {
-      const opts = q.options || [];
-      const dist = opts.map((o,oi)=>({label:o||`선택지${oi+1}`, cnt:rawAnswers.filter(a=>String(a)===String(oi)).length}));
-      const maxCnt = Math.max(...dist.map(d=>d.cnt), 1);
-      analysisHTML = `<div class="dist-bar-wrap">
-        ${dist.map(d=>`<div class="dist-row">
-          <div class="dist-label" title="${d.label}">${d.label}</div>
-          <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
-          <div class="dist-cnt">${d.cnt}명</div>
-        </div>`).join('')}
-      </div>`;
-
+      const opts=q.options||[];
+      const dist=opts.map((o,oi)=>({label:o||`선택지${oi+1}`,cnt:rawAnswers.filter(a=>String(a)===String(oi)).length}));
+      const maxCnt=Math.max(...dist.map(d=>d.cnt),1);
+      aHTML=`<div class="dist-bar-wrap">${dist.map(d=>makeDistRow(d.label,d.cnt,maxCnt)).join('')}</div>`;
     } else if (q.type === 'ox') {
-      const oCnt = rawAnswers.filter(a=>a==='O').length;
-      const xCnt = rawAnswers.filter(a=>a==='X').length;
-      const maxCnt = Math.max(oCnt, xCnt, 1);
-      analysisHTML = `<div class="dist-bar-wrap">
-        <div class="dist-row">
-          <div class="dist-label">O</div>
-          <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${Math.round(oCnt/maxCnt*100)}%"></div></div>
-          <div class="dist-cnt">${oCnt}명</div>
-        </div>
+      const oCnt=rawAnswers.filter(a=>a==='O').length;
+      const xCnt=rawAnswers.filter(a=>a==='X').length;
+      const maxCnt=Math.max(oCnt,xCnt,1);
+      aHTML=`<div class="dist-bar-wrap">
+        ${makeDistRow('O',oCnt,maxCnt)}
         <div class="dist-row">
           <div class="dist-label">X</div>
           <div class="dist-bar-bg"><div class="dist-bar-fill" style="background:var(--accent3);width:${Math.round(xCnt/maxCnt*100)}%"></div></div>
-          <div class="dist-cnt">${xCnt}명</div>
+          <div class="dist-cnt">${xCnt}명 <span class="dist-pct">${responses.length?Math.round(xCnt/responses.length*100):0}%</span></div>
         </div>
       </div>`;
-
     } else if (q.type === 'grid' || q.type === 'checkgrid') {
-      const rows = q.rows || [];
-      const cols = q.cols || [];
-      analysisHTML = rows.map((r,ri) => {
-        if (q.type === 'grid') {
-          const dist = cols.map((c,ci)=>({label:c, cnt:rawAnswers.filter(a=>a&&a[ri]===ci).length}));
-          const maxCnt = Math.max(...dist.map(d=>d.cnt), 1);
-          return `<div style="margin-bottom:14px;">
-            <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;">${r}</div>
-            <div class="dist-bar-wrap">
-              ${dist.map(d=>`<div class="dist-row">
-                <div class="dist-label">${d.label}</div>
-                <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
-                <div class="dist-cnt">${d.cnt}명</div>
-              </div>`).join('')}
-            </div>
-          </div>`;
-        } else {
-          const dist = cols.map((c,ci)=>({label:c, cnt:rawAnswers.filter(a=>a&&Array.isArray(a[ri])&&a[ri].includes(ci)).length}));
-          const maxCnt = Math.max(...dist.map(d=>d.cnt), 1);
-          return `<div style="margin-bottom:14px;">
-            <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;">${r}</div>
-            <div class="dist-bar-wrap">
-              ${dist.map(d=>`<div class="dist-row">
-                <div class="dist-label">${d.label}</div>
-                <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
-                <div class="dist-cnt">${d.cnt}명</div>
-              </div>`).join('')}
-            </div>
-          </div>`;
-        }
+      const rows=q.rows||[],cols=q.cols||[];
+      aHTML=rows.map((r,ri)=>{
+        const dist=cols.map((c,ci)=>({label:c,cnt:q.type==='grid'?rawAnswers.filter(a=>a&&a[ri]===ci).length:rawAnswers.filter(a=>a&&Array.isArray(a[ri])&&a[ri].includes(ci)).length}));
+        const maxCnt=Math.max(...dist.map(d=>d.cnt),1);
+        return `<div style="margin-bottom:14px;"><div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;">${r}</div>
+          <div class="dist-bar-wrap">${dist.map(d=>makeDistRow(d.label,d.cnt,maxCnt)).join('')}</div></div>`;
       }).join('');
-
     } else if (q.type === 'date' || q.type === 'time') {
-      const vals = rawAnswers.filter(a=>typeof a==='string'&&a.trim());
-      const freq = {};
-      vals.forEach(v => { freq[v]=(freq[v]||0)+1; });
-      const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
-      const maxCnt = sorted.length ? sorted[0][1] : 1;
-      analysisHTML = sorted.length
-        ? `<div class="dist-bar-wrap">${sorted.map(([v,c])=>`<div class="dist-row">
-            <div class="dist-label">${v}</div>
-            <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${Math.round(c/maxCnt*100)}%"></div></div>
-            <div class="dist-cnt">${c}명</div>
-          </div>`).join('')}</div>`
-        : `<div style="color:var(--muted);font-size:13px;">응답 없음</div>`;
-
+      const vals=rawAnswers.filter(a=>typeof a==='string'&&a.trim());
+      const freq={};vals.forEach(v=>{freq[v]=(freq[v]||0)+1;});
+      const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      const maxCnt=sorted.length?sorted[0][1]:1;
+      aHTML=sorted.length?`<div class="dist-bar-wrap">${sorted.map(([v,c])=>makeDistRow(v,c,maxCnt)).join('')}</div>`:`<div style="color:var(--muted);font-size:13px;">응답 없음</div>`;
     } else {
-      // 단답형 / 서술형 / 파일 — 텍스트 목록
-      const textAnswers = q.type === 'file'
-        ? rawAnswers.map(a => typeof a === 'object' ? a.name || '파일 첨부됨' : String(a))
-        : rawAnswers.filter(a => typeof a === 'string' && a.trim());
-
-      analysisHTML = `
-        <div class="text-resp-list">
-          ${textAnswers.length
-            ? textAnswers.map(a=>`<div class="text-resp-item">${a}</div>`).join('')
-            : `<div style="color:var(--muted);font-size:13px;padding:8px 0;">응답 없음</div>`}
-        </div>`;
+      const textAnswers=q.type==='file'?rawAnswers.map(a=>typeof a==='object'?a.name||'파일 첨부됨':String(a)):rawAnswers.filter(a=>typeof a==='string'&&a.trim());
+      aHTML=`<div class="text-resp-list">${textAnswers.length?textAnswers.map((a,ai)=>`<div class="text-resp-item"><span style="font-size:10px;color:var(--dim);margin-right:6px;">${responses[ai]?.name||''}</span>${a}</div>`).join(''):`<div style="color:var(--muted);font-size:13px;padding:8px 0;">응답 없음</div>`}</div>`;
     }
 
-    return `<div class="sq-chart-card">
-      <div class="sq-chart-header">
+    const isWide=['grid','checkgrid','short','essay','file'].includes(q.type);
+    return {html:`<div class="sq-chart-card open" id="sqcard-${q.id}"${isWide?' style="grid-column:1/-1"':''}>
+      <div class="sq-chart-header" onclick="this.parentElement.classList.toggle('open')">
         <div class="sq-num-badge">${i+1}</div>
-        <div class="sq-text">${q.text || '(문항 없음)'}</div>
-        <span class="sq-type-tag">${typeLabel}</span>
+        <div style="flex:1;min-width:0;">
+          <div class="sq-text" style="margin-bottom:4px;">${q.text||'(문항 없음)'}</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="sq-type-tag">${typeLabel}</span>
+            <span style="font-size:11px;color:var(--muted);">응답 ${respondentCount}/${responses.length}명 · ${pctStr}</span>
+          </div>
+        </div>
+        <span class="sq-chevron">▾</span>
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">응답 ${respondentCount}명 / 전체 ${responses.length}명</div>
-      ${analysisHTML}
-    </div>`;
-  }).join('');
+      <div class="sq-chart-body">${aHTML}</div>
+    </div>`, isWide};
+  });
+
+  // 2열 그리드로 배치
+  const gridItems=allCardHTMLs.map(c=>c.html);
+  container.innerHTML=respondentChipsHTML+`<div class="sq-grid">${gridItems.join('')}</div>`;
 }
 
 // ══ 이달의 수상자 ══
