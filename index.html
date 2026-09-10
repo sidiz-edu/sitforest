@@ -1512,11 +1512,11 @@ body:not(.light-mode) #panel-serp{--bg:#10111D;--surface:#191B2C;--surface-2:#21
             <div class="stat"><div class="stat-label">종합 점수 평균</div><div class="stat-val c-blue" id="rd-total-avg">—</div></div>
             <div class="stat"><div class="stat-label">선택 인원</div><div class="stat-val" id="rd-selected">0명</div></div>
           </div>
-          <!-- 설문 문항별 분석 (설문 모드일 때만 표시) -->
+          <!-- 설문 종합 요약 + 문항별 분석 (설문 모드일 때만 표시) -->
           <div id="survey-analysis-section" style="display:none;margin-bottom:24px;">
+            <div id="survey-summary-card" style="margin-bottom:20px;"></div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
               <div class="sec-label" style="margin-bottom:0;">문항별 분석</div>
-
             </div>
             <div id="survey-question-charts"></div>
           </div>
@@ -4357,6 +4357,125 @@ function importExcel() {
 }
 
 // ══════════════════════════════════════
+// 설문 종합 요약 카드
+// ══════════════════════════════════════
+function renderSurveySummary(item, responses) {
+  const card = document.getElementById('survey-summary-card');
+  if (!card) return;
+  if (!responses.length || !item.questions.length) { card.innerHTML = ''; return; }
+
+  const qs = item.questions;
+  const total = responses.length;
+
+  // 문항 유형별 분류
+  const scaleTypes = ['scale','linear','star'];
+  const choiceTypes = ['multiple','checkbox','dropdown','ox'];
+
+  // 척도 문항 평균
+  const scaleRows = qs.filter(q => scaleTypes.includes(q.type)).map(q => {
+    const max = q.type==='scale'?5 : q.type==='linear'?(q.linearMax??5) : (q.starMax||5);
+    const nums = responses.map(r=>r.answers?.[q.id]).filter(v=>v!=null&&v!=='').map(Number).filter(n=>!isNaN(n));
+    const avg = nums.length ? (nums.reduce((a,b)=>a+b,0)/nums.length) : null;
+    return {text: q.text, avg, max, cnt: nums.length};
+  }).filter(r=>r.avg!==null);
+
+  // 각 문항 응답률
+  const respRates = qs.map(q => {
+    const cnt = responses.filter(r=>{ const a=r.answers?.[q.id]; return a!=null&&a!==''&&!(Array.isArray(a)&&a.length===0); }).length;
+    return Math.round(cnt/total*100);
+  });
+  const avgRespRate = respRates.length ? Math.round(respRates.reduce((a,b)=>a+b,0)/respRates.length) : 0;
+
+  // 선택형 문항 최다 응답 찾기
+  const topChoices = qs.filter(q=>choiceTypes.includes(q.type)&&q.options?.length).map(q=>{
+    const opts = q.options||[];
+    if (q.type==='checkbox') {
+      const dist = opts.map((o,oi)=>({label:o,cnt:responses.filter(r=>Array.isArray(r.answers?.[q.id])&&r.answers[q.id].includes(oi)).length}));
+      const top = dist.sort((a,b)=>b.cnt-a.cnt)[0];
+      return top?.cnt > 0 ? {qText:q.text, label:top.label, cnt:top.cnt, pct:Math.round(top.cnt/total*100)} : null;
+    } else if (q.type==='ox') {
+      const oCnt=responses.filter(r=>r.answers?.[q.id]==='O').length;
+      const xCnt=responses.filter(r=>r.answers?.[q.id]==='X').length;
+      const top = oCnt>=xCnt ? {label:'O',cnt:oCnt} : {label:'X',cnt:xCnt};
+      return top.cnt>0 ? {qText:q.text, label:top.label, cnt:top.cnt, pct:Math.round(top.cnt/total*100)} : null;
+    } else {
+      const dist = opts.map((o,oi)=>({label:o,cnt:responses.filter(r=>String(r.answers?.[q.id])===String(oi)).length}));
+      const top = dist.sort((a,b)=>b.cnt-a.cnt)[0];
+      return top?.cnt > 0 ? {qText:q.text, label:top.label, cnt:top.cnt, pct:Math.round(top.cnt/total*100)} : null;
+    }
+  }).filter(Boolean).slice(0,3);
+
+  // 전체 평균 점수 (척도 문항들의 평균)
+  const overallAvg = scaleRows.length
+    ? (scaleRows.reduce((s,r)=>s+(r.avg/r.max*100),0)/scaleRows.length).toFixed(0)
+    : null;
+
+  const scoreColor = overallAvg >= 80 ? 'var(--accent2)' : overallAvg >= 60 ? 'var(--accent)' : 'var(--accent3)';
+
+  card.innerHTML = `
+  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;">
+    <div style="padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+      <span style="font-size:16px;">📊</span>
+      <span style="font-size:13px;font-weight:700;color:var(--text);">종합 요약</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--muted);">${item.title||'설문'} · ${total}명 응답</span>
+    </div>
+    <div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+      <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:var(--rs);">
+        <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1;">${total}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">총 응답자</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:var(--rs);">
+        <div style="font-size:28px;font-weight:800;color:var(--text);line-height:1;">${qs.length}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">총 문항 수</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:var(--rs);">
+        <div style="font-size:28px;font-weight:800;color:var(--accent2);line-height:1;">${avgRespRate}<span style="font-size:14px;">%</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">평균 응답률</div>
+      </div>
+      ${overallAvg !== null ? `
+      <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:var(--rs);">
+        <div style="font-size:28px;font-weight:800;color:${scoreColor};line-height:1;">${overallAvg}<span style="font-size:14px;">%</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">척도 평균 점수</div>
+      </div>` : ''}
+    </div>
+    ${scaleRows.length ? `
+    <div style="padding:0 20px 14px;">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">척도 문항 평균</div>
+      ${scaleRows.map(r=>{
+        const pct = Math.round(r.avg/r.max*100);
+        const barColor = pct>=80?'var(--accent2)':pct>=60?'var(--accent)':'var(--accent3)';
+        return `<div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+            <div style="font-size:12px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:12px;">${r.text}</div>
+            <div style="font-size:13px;font-weight:700;color:${barColor};flex-shrink:0;">${r.avg.toFixed(1)}<span style="font-size:10px;color:var(--muted);font-weight:400;"> / ${r.max}</span></div>
+          </div>
+          <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .4s;"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+    ${topChoices.length ? `
+    <div style="padding:0 20px 16px;border-top:1px solid var(--border);padding-top:14px;">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">선택형 문항 최다 응답</div>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        ${topChoices.map(c=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:var(--rs);">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.qText}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${c.label}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:15px;font-weight:800;color:var(--accent);">${c.pct}%</div>
+            <div style="font-size:10px;color:var(--muted);">${c.cnt}명</div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+// ══════════════════════════════════════
 // 설문 문항별 분석
 // ══════════════════════════════════════
 function renderSurveyAnalysis(item, responses) {
@@ -5422,6 +5541,7 @@ async function showResultDetail(itemId) {
   const analysisSection = document.getElementById('survey-analysis-section');
   if (isSurvey) {
     analysisSection.style.display = 'block';
+    renderSurveySummary(item, responses);
     renderSurveyAnalysis(item, responses);
   } else {
     analysisSection.style.display = 'none';
