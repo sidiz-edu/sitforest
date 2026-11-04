@@ -1069,6 +1069,39 @@ body:not(.light-mode) #panel-serp{--bg:#10111D;--surface:#191B2C;--surface-2:#21
 #panel-serp .serp-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
 #panel-serp .serp-tab-pane{display:none;}
 #panel-serp .serp-tab-pane.active{display:block;}
+/* == 작성 기록 탭 == */
+#panel-serp .serp-log-wrap{max-width:900px;margin:0 auto;padding:0 0 60px;}
+#panel-serp .serp-log-body{padding:24px 48px 0;}
+#panel-serp .serp-log-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+#panel-serp .serp-log-toolbar .serp-my-search{flex:0 1 160px;min-width:120px;}
+#panel-serp .serp-log-legend{margin-left:auto;display:flex;gap:14px;font-size:11px;color:var(--text-muted);align-items:center;white-space:nowrap;}
+#panel-serp .serp-log-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px;}
+#panel-serp .serp-log-scroll{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:10px;background:var(--surface);}
+#panel-serp table.serp-log{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%;}
+#panel-serp .serp-log th,#panel-serp .serp-log td{padding:0;border-bottom:1px solid var(--border);white-space:nowrap;}
+#panel-serp .serp-log thead th{position:sticky;background:var(--surface-2);color:var(--text-muted);font-weight:600;font-size:10px;letter-spacing:.04em;z-index:2;}
+#panel-serp .serp-log thead tr.mon th{top:0;padding:8px 6px 3px;text-align:center;}
+#panel-serp .serp-log thead tr.rnd th{top:25px;padding:2px 3px 7px;text-align:center;min-width:32px;font-weight:500;border-bottom:1px solid var(--border);}
+#panel-serp .serp-log th.sep,#panel-serp .serp-log td.sep{border-left:1px solid var(--border);}
+#panel-serp .serp-log th.name-col,#panel-serp .serp-log td.name-col{position:sticky;left:0;z-index:3;background:var(--surface);text-align:left;padding:6px 12px;min-width:150px;border-right:1px solid var(--border);}
+#panel-serp .serp-log thead th.name-col{z-index:4;background:var(--surface-2);}
+#panel-serp .serp-log td.name-col b{font-weight:600;color:var(--text);cursor:pointer;}
+#panel-serp .serp-log td.name-col b:hover{color:var(--accent);text-decoration:underline;}
+#panel-serp .serp-log td.name-col small{display:block;font-size:10px;color:var(--text-muted);margin-top:1px;}
+#panel-serp .serp-log tr.resigned td.name-col b{color:var(--text-muted);text-decoration:line-through;font-weight:500;}
+#panel-serp .serp-log tr.resigned td.cell.on span{opacity:.45;}
+#panel-serp .serp-log td.cell{text-align:center;}
+#panel-serp .serp-log td.cell span{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--border);opacity:.55;}
+#panel-serp .serp-log td.cell.on span{background:var(--accent);opacity:1;}
+#panel-serp .serp-log td.sum,#panel-serp .serp-log th.sum{text-align:right;padding:6px 12px;font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent);border-left:1px solid var(--border);min-width:48px;}
+#panel-serp .serp-log thead th.sum{color:var(--text-muted);}
+#panel-serp .serp-log tr.grp td{background:var(--surface-2);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text-muted);padding:5px 12px;text-align:left;}
+#panel-serp .serp-log tfoot td{position:sticky;bottom:0;background:var(--surface-2);color:var(--text-muted);font-size:10px;text-align:center;padding:6px 3px;font-variant-numeric:tabular-nums;border-top:1px solid var(--border);border-bottom:none;z-index:2;}
+#panel-serp .serp-log tfoot td.name-col{text-align:left;font-size:11px;font-weight:600;background:var(--surface-2);z-index:4;}
+#panel-serp .serp-log tfoot td.sum{text-align:right;}
+#panel-serp .serp-log tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,var(--surface));}
+#panel-serp .serp-log-note{font-size:11px;color:var(--text-muted);margin-top:12px;line-height:1.6;}
+@media (max-width:680px){#panel-serp .serp-log-body{padding:20px 20px 0;}#panel-serp .serp-log-legend{margin-left:0;}}
 /* == 내 회고 보기 탭 == */
 #panel-serp .serp-my-wrap{max-width:900px;margin:0 auto;padding:28px 48px 60px;}
 /* 필터 바 */
@@ -1561,6 +1594,7 @@ body:not(.light-mode) #panel-serp{--bg:#10111D;--surface:#191B2C;--surface-2:#21
 <nav class="serp-tab-nav">
   <button class="serp-tab-btn active" onclick="serpMyTab('analysis')" id="serp-tab-btn-analysis">전체 분석</button>
   <button class="serp-tab-btn" onclick="serpMyTab('mine')" id="serp-tab-btn-mine">내 회고 보기</button>
+  <button class="serp-tab-btn" onclick="serpMyTab('log')" id="serp-tab-btn-log">작성 기록</button>
 </nav>
 
 <!-- 전체 분석 탭 -->
@@ -2200,6 +2234,34 @@ body:not(.light-mode) #panel-serp{--bg:#10111D;--surface:#191B2C;--surface-2:#21
   </div>
 </div>
 
+
+<!-- 작성 기록 탭 -->
+<div id="serp-tab-log" class="serp-tab-pane">
+<div class="page-header">
+  <div class="header-eyebrow">SERP · 응대회고 프로그램</div>
+  <h1 class="header-title">작성자 <em>기록</em></h1>
+  <p class="header-sub" id="serp-log-sub">파일럿(2025년 10월)부터 지금까지, 회차별 응대회고노트 작성 여부</p>
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num" id="serp-log-stat-notes">—</div><div class="stat-label">총 작성 건수</div></div>
+    <div class="stat-item"><div class="stat-num" id="serp-log-stat-rounds">—</div><div class="stat-label">운영 회차</div></div>
+    <div class="stat-item"><div class="stat-num" id="serp-log-stat-authors">—</div><div class="stat-label">누적 작성자</div></div>
+    <div class="stat-item"><div class="stat-num" id="serp-log-stat-last">—</div><div class="stat-label" id="serp-log-stat-last-label">최근 회차 참여</div></div>
+  </div>
+</div>
+<div class="serp-log-wrap">
+  <div class="serp-log-body">
+    <div class="serp-log-toolbar">
+      <select class="serp-my-select" id="serp-log-store" onchange="serpLogSetFilter('store',this.value)"><option value="">전체 매장</option></select>
+      <select class="serp-my-select" id="serp-log-status" onchange="serpLogSetFilter('status',this.value)"><option value="all">전체</option><option value="active">현직</option><option value="resigned">퇴직자만</option></select>
+      <select class="serp-my-select" id="serp-log-sort" onchange="serpLogSetFilter('sort',this.value)"><option value="store">매장·이름순</option><option value="count">작성 많은 순</option><option value="recent">최근 참여순</option></select>
+      <input class="serp-my-search" id="serp-log-name" type="text" placeholder="이름 검색" oninput="serpLogSetFilter('name',this.value)">
+      <div class="serp-log-legend"><span><i style="background:var(--accent)"></i>작성</span><span><i style="background:var(--border)"></i>미작성</span></div>
+    </div>
+    <div class="serp-log-scroll" id="serp-log-table"><div class="my-loading">불러오는 중…</div></div>
+    <p class="serp-log-note" id="serp-log-note"></p>
+  </div>
+</div>
+</div><!-- /serp-tab-log -->
     </div><!-- /panel-serp -->
   </main>
 </div>
@@ -2228,6 +2290,7 @@ body:not(.light-mode) #panel-serp{--bg:#10111D;--surface:#191B2C;--surface-2:#21
     document.getElementById('serp-tab-' + tab).classList.add('active');
     document.getElementById('serp-tab-btn-' + tab).classList.add('active');
     if (tab === 'mine' && !window.serpMyInited) serpMyInit();
+    if (tab === 'log' && window.serpLogInit) serpLogInit();
   };
 
   window.serpMyInited = false;
@@ -2411,6 +2474,179 @@ body:not(.light-mode) #panel-serp{--bg:#10111D;--surface:#191B2C;--surface-2:#21
 })();
 </script>
 
+
+<!-- ── SERP 작성 기록 JS ── -->
+<script>
+(function(){
+  /* 회차 정의 (시작일 기준). 같은 달 안에서는 DB의 주차 라벨(1주·1차 …)을 우선하고, 없으면 작성일로 판정 */
+  var SERP_ROUNDS = [
+    {m:'파일럿', r:'1주', start:'2025-10-24'}, {m:'파일럿', r:'2주', start:'2025-10-30'},
+    {m:'파일럿', r:'3주', start:'2025-11-05'}, {m:'파일럿', r:'4주', start:'2025-11-12'},
+    {m:'2025.12', r:'1주', start:'2025-12-03'}, {m:'2025.12', r:'2주', start:'2025-12-10'}, {m:'2025.12', r:'3주', start:'2025-12-17'},
+    {m:'2026.01', r:'1주', start:'2026-01-08'}, {m:'2026.01', r:'2주', start:'2026-01-14'}, {m:'2026.01', r:'3주', start:'2026-01-20'},
+    {m:'2026.02', r:'1주', start:'2026-02-05'}, {m:'2026.02', r:'2주', start:'2026-02-12'}, {m:'2026.02', r:'3주', start:'2026-02-19'},
+    {m:'2026.03', r:'1주', start:'2026-03-06'}, {m:'2026.03', r:'2주', start:'2026-03-15'}, {m:'2026.03', r:'3주', start:'2026-03-21'},
+    {m:'2026.04', r:'1주', start:'2026-04-15'}, {m:'2026.04', r:'2주', start:'2026-04-22'},
+    {m:'2026.05', r:'1차', start:'2026-05-14'}, {m:'2026.05', r:'2차', start:'2026-05-21'},
+    {m:'2026.06', r:'1차', start:'2026-06-12'}, {m:'2026.06', r:'2차', start:'2026-06-19'},
+    {m:'2026.08', r:'1차', start:'2026-08-08'}, {m:'2026.08', r:'2차', start:'2026-08-16'},
+    {m:'2026.09', r:'1차', start:'2026-09-09'}, {m:'2026.09', r:'2차', start:'2026-09-16'},
+    {m:'2026.10', r:'1차', start:'2026-10-19'}, {m:'2026.10', r:'2차', start:'2026-10-26'}
+  ];
+  /* serp_notes 테이블에 아직 올리지 않은 회차 보충분 — [작성일, 작성자, 회차]. 같은 사람·회차는 중복 집계되지 않으므로 DB에 올린 뒤에도 그대로 둬도 됨 */
+  var SERP_LOG_EXTRA = [["2026-09-09","김의수","1"],["2026-09-09","김형주","1"],["2026-09-09","정주원","1"],["2026-09-10","변상미","1"],["2026-09-10","신다은","1"],["2026-09-10","최향선","1"],["2026-09-11","김동규","1"],["2026-09-11","김수정","1"],["2026-09-11","김영재","1"],["2026-09-11","김현진","1"],["2026-09-11","박승리","1"],["2026-09-11","최헬기","1"],["2026-09-12","김재훈","1"],["2026-09-12","이연서","1"],["2026-09-12","이정은","1"],["2026-09-12","천이준","1"],["2026-09-13","박채연","1"],["2026-09-13","서정란","1"],["2026-09-13","채연","1"],["2026-09-13","최지영","1"],["2026-09-13","태우형","1"],["2026-09-14","김예린","1"],["2026-09-14","박규학","1"],["2026-09-14","박은지","1"],["2026-09-14","신원준","1"],["2026-09-14","이정화","1"],["2026-09-14","최혜림","1"],["2026-09-14","한태호","1"],["2026-09-18","김영재","2"],["2026-09-18","김의수","2"],["2026-09-19","박채연","2"],["2026-09-19","신다은","2"],["2026-09-19","이연서","2"],["2026-09-20","김예린","2"],["2026-09-20","김재훈","2"],["2026-09-20","김현진","2"],["2026-09-20","서정란","2"],["2026-09-20","이정화","2"],["2026-09-20","천이준","2"],["2026-09-20","최지영","2"],["2026-09-20","최헬기","2"],["2026-09-20","태우형","2"],["2026-09-21","김동규","2"],["2026-09-21","김수정","2"],["2026-09-21","김형주","2"],["2026-09-21","박규학","2"],["2026-09-21","변상미","2"],["2026-09-21","신원준","2"],["2026-09-21","이정은","2"],["2026-09-21","최향선","2"],["2026-09-21","최혜림","2"],["2026-09-21","한태호","2"],["2026-09-22","안태희","2"],["2026-09-22","채연","2"],["2026-09-23","박은지","2"],["2026-10-20","김수정","1"],["2026-10-20","김의수","1"],["2026-10-20","윤예진","1"],["2026-10-21","김형주","1"],["2026-10-21","박승리","1"],["2026-10-21","변상미","1"],["2026-10-21","서정란","1"],["2026-10-21","유영욱","1"],["2026-10-21","태우형","1"],["2026-10-22","김동규","1"],["2026-10-22","김수로","1"],["2026-10-22","김용수","1"],["2026-10-22","신다은","1"],["2026-10-22","최향선","1"],["2026-10-23","김영재","1"],["2026-10-23","박규학","1"],["2026-10-23","최지영","1"],["2026-10-23","최헬기","1"],["2026-10-23","최혜림","1"],["2026-10-24","김소연","1"],["2026-10-24","김재훈","1"],["2026-10-24","김현진","1"],["2026-10-24","이연서","1"],["2026-10-24","이정은","1"],["2026-10-24","이정화","1"],["2026-10-24","천이준","1"],["2026-10-25","박은지","1"],["2026-10-26","김현진","2"],["2026-10-26","변상미","2"],["2026-10-27","김의수","2"],["2026-10-27","최향선","2"],["2026-10-27","최혜림","2"],["2026-10-28","김수로","2"],["2026-10-28","김형주","2"],["2026-10-28","윤예진","2"],["2026-10-28","최지영","2"],["2026-10-29","김수정","2"],["2026-10-29","김재훈","2"],["2026-10-30","김영재","2"],["2026-10-30","박승리","2"],["2026-10-30","신다은","2"],["2026-10-30","이정은","2"],["2026-10-30","이정화","2"],["2026-10-31","김소연","2"],["2026-10-31","김용수","2"],["2026-10-31","박규학","2"],["2026-10-31","서정란","2"],["2026-10-31","이연서","2"],["2026-10-31","천이준","2"],["2026-10-31","최헬기","2"],["2026-10-31","태우형","2"],["2026-11-01","한태호","2"]];
+  var EXCLUDED_AUTHORS = {'염제명':true}; /* 운영자 공지 글 */
+
+  var _members = [], _marks = {}, _lastSeen = {}, _noteKeys = {}, _inited = false, _loading = false;
+  var _f = { store:'', status:'all', sort:'store', name:'' };
+
+  function roundIndex(date, label) {
+    if (!date) return -1;
+    var d = String(date).slice(0,10);
+    if (d < SERP_ROUNDS[0].start) return -1;
+    var idx = -1;
+    for (var i = 0; i < SERP_ROUNDS.length; i++) { if (SERP_ROUNDS[i].start <= d) idx = i; else break; }
+    var num = label ? (String(label).match(/(\d)/) || [])[1] : null;
+    if (num) {
+      var m = SERP_ROUNDS[idx].m;
+      for (var j = 0; j < SERP_ROUNDS.length; j++) {
+        if (SERP_ROUNDS[j].m === m && SERP_ROUNDS[j].r.charAt(0) === num) return j;
+      }
+    }
+    return idx;
+  }
+
+  function addMark(name, date, label) {
+    name = (name || '').trim();
+    if (!name || EXCLUDED_AUTHORS[name] || !/[가-힣]/.test(name)) return;
+    var i = roundIndex(date, label);
+    if (i < 0) return;
+    var d = String(date).slice(0,10);
+    _noteKeys[name + '|' + i + '|' + d] = true;
+    (_marks[name] = _marks[name] || {})[i] = true;
+    if (!_lastSeen[name] || d > _lastSeen[name]) _lastSeen[name] = d;
+  }
+
+  window.serpLogSetFilter = function(k, v) { _f[k] = (k === 'name') ? v.trim() : v; serpLogRender(); };
+
+  window.serpLogInit = async function() {
+    if (_inited) { serpLogRender(); return; }
+    if (_loading) return;
+    var box = document.getElementById('serp-log-table');
+    if (!window.sb) { if (box) box.innerHTML = '<div class="my-empty">DB 연결 대기 중입니다. 잠시 후 탭을 다시 눌러 주세요.</div>'; return; }
+    _loading = true;
+    try {
+      var memRes = await window.sb.from('sidiz_members').select('id,name,store,resigned,hire_date,resign_date').order('store').order('name');
+      _members = memRes.data || [];
+      var notesRes = await window.sb.from('serp_notes').select('작성자,작성일,주차');
+      if (notesRes.error) throw notesRes.error;
+      _marks = {}; _lastSeen = {}; _noteKeys = {};
+      (notesRes.data || []).forEach(function(r){ addMark(r['작성자'], r['작성일'], r['주차']); });
+      SERP_LOG_EXTRA.forEach(function(e){ addMark(e[1], e[0], e[2]); });
+
+      var stores = [];
+      _members.forEach(function(m){ if (m.store && stores.indexOf(m.store) === -1) stores.push(m.store); });
+      stores.sort(function(a,b){ return a.localeCompare(b,'ko'); });
+      var sel = document.getElementById('serp-log-store');
+      if (sel) sel.innerHTML = '<option value="">전체 매장</option>' + stores.map(function(s){ return '<option value="' + serpMyEsc(s) + '">' + serpMyEsc(s) + '</option>'; }).join('');
+
+      /* 상단 통계 */
+      var last = SERP_ROUNDS.length - 1;
+      var lastCnt = Object.keys(_marks).filter(function(n){ return _marks[n][last]; }).length;
+      setText('serp-log-stat-notes', Object.keys(_noteKeys).length);
+      setText('serp-log-stat-rounds', SERP_ROUNDS.length);
+      setText('serp-log-stat-authors', Object.keys(_marks).length);
+      setText('serp-log-stat-last', lastCnt + '명');
+      setText('serp-log-stat-last-label', '최근 회차 참여 (' + SERP_ROUNDS[last].m + ' ' + SERP_ROUNDS[last].r + ')');
+      var maxDb = ''; (notesRes.data || []).forEach(function(r){ if (r['작성일'] && r['작성일'] > maxDb) maxDb = r['작성일']; });
+      var note = document.getElementById('serp-log-note');
+      if (note) note.textContent = '회차는 작성일 기준으로 판정합니다. serp_notes 테이블은 ' + (maxDb ? maxDb.slice(0,10) : '—') + ' 작성분까지 저장되어 있고, 그 이후 회차는 에브리싯 내보내기 파일 기준으로 보충했습니다. 이름을 누르면 해당 SE의 회고 글로 이동합니다.';
+
+      _inited = true;
+      serpLogRender();
+    } catch(e) {
+      console.error('serpLogInit 오류', e);
+      if (box) box.innerHTML = '<div class="my-empty">데이터 불러오기에 실패했습니다.</div>';
+    } finally { _loading = false; }
+  };
+
+  function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+  function countOf(name) { return Object.keys(_marks[name] || {}).length; }
+
+  window.serpLogRender = function() {
+    var box = document.getElementById('serp-log-table');
+    if (!box || !_inited) return;
+
+    var rows = _members.filter(function(m) {
+      if (_f.store && m.store !== _f.store) return false;
+      if (_f.status === 'active' && m.resigned) return false;
+      if (_f.status === 'resigned' && !m.resigned) return false;
+      if (_f.name && (m.name || '').indexOf(_f.name) === -1) return false;
+      return true;
+    }).map(function(m){ return { name:m.name, store:m.store || '미지정', resigned:!!m.resigned, cnt:countOf(m.name), last:_lastSeen[m.name] || '' }; });
+
+    var memberNames = {}; _members.forEach(function(m){ memberNames[m.name] = true; });
+    var extras = [];
+    if (!_f.store && _f.status !== 'resigned') {
+      Object.keys(_marks).forEach(function(n) {
+        if (memberNames[n]) return;
+        if (_f.name && n.indexOf(_f.name) === -1) return;
+        extras.push({ name:n, store:'', resigned:false, cnt:countOf(n), last:_lastSeen[n] || '', extra:true });
+      });
+    }
+
+    var sorter = {
+      store:  function(a,b){ return a.store.localeCompare(b.store,'ko') || a.name.localeCompare(b.name,'ko'); },
+      count:  function(a,b){ return b.cnt - a.cnt || a.name.localeCompare(b.name,'ko'); },
+      recent: function(a,b){ return (b.last > a.last ? 1 : b.last < a.last ? -1 : 0) || b.cnt - a.cnt || a.name.localeCompare(b.name,'ko'); }
+    }[_f.sort] || function(){ return 0; };
+    rows.sort(sorter); extras.sort(sorter);
+
+    if (!rows.length && !extras.length) { box.innerHTML = '<div class="my-empty">조건에 맞는 SE가 없습니다.</div>'; return; }
+
+    /* 헤더: 월 그룹 + 회차 */
+    var months = [];
+    SERP_ROUNDS.forEach(function(r, i){ var g = months[months.length-1]; if (!g || g.m !== r.m) months.push({ m:r.m, n:1 }); else g.n++; });
+    var h = '<table class="serp-log"><thead><tr class="mon"><th class="name-col" rowspan="2">이름 · 매장</th>';
+    months.forEach(function(g){ h += '<th class="sep" colspan="' + g.n + '">' + serpMyEsc(g.m) + '</th>'; });
+    h += '<th class="sum" rowspan="2">합계</th></tr><tr class="rnd">';
+    SERP_ROUNDS.forEach(function(r, i){ h += '<th' + (i === 0 || SERP_ROUNDS[i-1].m !== r.m ? ' class="sep"' : '') + '>' + serpMyEsc(r.r) + '</th>'; });
+    h += '</tr></thead><tbody>';
+
+    var colTotals = SERP_ROUNDS.map(function(){ return 0; });
+    function rowHtml(p) {
+      var mk = _marks[p.name] || {};
+      var s = '<tr' + (p.resigned ? ' class="resigned"' : '') + '><td class="name-col"><b data-n="' + serpMyEsc(p.name) + '" onclick="serpLogOpen(this.dataset.n)">' + serpMyEsc(p.name) + '</b><small>' + serpMyEsc(p.store || '명단 없음') + (p.last ? ' · 최근 ' + p.last.slice(2).replace(/-/g,'.') : '') + '</small></td>';
+      SERP_ROUNDS.forEach(function(r, i) {
+        var on = !!mk[i]; if (on) colTotals[i]++;
+        var cls = 'cell' + (on ? ' on' : '') + ((i === 0 || SERP_ROUNDS[i-1].m !== r.m) ? ' sep' : '');
+        s += '<td class="' + cls + '" title="' + serpMyEsc(p.name + ' · ' + r.m + ' ' + r.r + (on ? ' 작성' : ' 미작성')) + '"><span></span></td>';
+      });
+      return s + '<td class="sum">' + p.cnt + '</td></tr>';
+    }
+    rows.forEach(function(p){ h += rowHtml(p); });
+    if (extras.length) {
+      h += '<tr class="grp"><td class="name-col">기타 (SE 명단 없음)</td><td colspan="' + (SERP_ROUNDS.length + 1) + '"></td></tr>';
+      extras.forEach(function(p){ h += rowHtml(p); });
+    }
+    h += '</tbody><tfoot><tr><td class="name-col">참여 인원 (표시된 ' + (rows.length + extras.length) + '명 기준)</td>';
+    SERP_ROUNDS.forEach(function(r, i){ h += '<td' + ((i === 0 || SERP_ROUNDS[i-1].m !== r.m) ? ' class="sep"' : '') + '>' + colTotals[i] + '</td>'; });
+    var grand = 0; rows.concat(extras).forEach(function(p){ grand += p.cnt; });
+    h += '<td class="sum">' + grand + '</td></tr></tfoot></table>';
+    box.innerHTML = h;
+  };
+
+  /* 이름 클릭 → 내 회고 보기 탭에서 해당 SE 선택 */
+  window.serpLogOpen = function(name) {
+    serpMyTab('mine');
+    var tries = 0;
+    var t = setInterval(function() {
+      if (window.serpMyInited) { clearInterval(t); serpMySelectChip(name); }
+      else if (++tries > 50) clearInterval(t);
+    }, 100);
+  };
+})();
+</script>
 <!-- ── 이달의 수상자 패널 ── -->
 <script>
 document.querySelector('.main').insertAdjacentHTML('beforeend', `
